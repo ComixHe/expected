@@ -293,7 +293,7 @@ using enable_forward_t = std::enable_if_t<
     (!std::is_same_v<std::remove_cv_t<T>, bool> ||                                           // LWG-3836
      !expected_detail::is_specialization_v<expected_detail::remove_cvref_t<U>, expected>) && //
     !std::is_same_v<expected_detail::remove_cvref_t<U>, unexpect_t>                          // LWG-4222
-    >;
+>;
 
 template<class T, class E, class U, class G, class UF, class GF>
 using enable_from_other_expected_t = std::enable_if_t<
@@ -314,7 +314,9 @@ using enable_from_other_expected_t = std::enable_if_t<
             std::is_constructible<unexpected<E>, expected<U, G>>,         //
             std::is_constructible<unexpected<E>, const expected<U, G> &>, //
             std::is_constructible<unexpected<E>, const expected<U, G>>    //
-            >>>>;
+        >>
+    >
+>;
 
 template<class E, class U, class G, class GF>
 using enable_from_other_void_expected_t = std::enable_if_t<
@@ -793,7 +795,8 @@ template<
     class T,
     class E,                                                                                //
     bool Enabled   = is_copy_constructible_or_void_v<T> && std::is_copy_constructible_v<E>, //
-    bool Trivially = is_trivially_copy_constructible_or_void_v<T> && std::is_trivially_copy_constructible_v<E>>
+    bool Trivially = is_trivially_copy_constructible_or_void_v<T> && std::is_trivially_copy_constructible_v<E>
+>
 struct copy_ctor_base : operations_base<T, E>
 {
     using operations_base<T, E>::operations_base;
@@ -846,7 +849,8 @@ template<
     class T,
     class E,
     bool Enabled   = is_move_constructible_or_void_v<T> && std::is_move_constructible_v<E>, //
-    bool Trivially = is_trivially_move_constructible_or_void_v<T> && std::is_trivially_move_constructible_v<E>>
+    bool Trivially = is_trivially_move_constructible_or_void_v<T> && std::is_trivially_move_constructible_v<E>
+>
 struct move_ctor_base : copy_ctor_base<T, E>
 {
     using copy_ctor_base<T, E>::copy_ctor_base;
@@ -895,9 +899,11 @@ struct move_ctor_base<T, E, true, false> : copy_ctor_base<T, E>
 };
 
 template<class T, class E>
-inline constexpr bool is_expected_copy_assignable_v =                        //
-    is_copy_assignable_or_void_v<T> && is_copy_constructible_or_void_v<T> && //
-    std::is_copy_assignable_v<E> && std::is_copy_constructible_v<E> &&       //
+inline constexpr bool is_expected_copy_assignable_v = //
+    is_copy_assignable_or_void_v<T> &&
+    is_copy_constructible_or_void_v<T> && //
+    std::is_copy_assignable_v<E> &&
+    std::is_copy_constructible_v<E> && //
     (is_nothrow_move_constructible_or_void_v<T> || std::is_nothrow_move_constructible_v<E>);
 
 // LWG-4026
@@ -915,7 +921,8 @@ template<
     class T,
     class E,
     bool Enabled   = is_expected_copy_assignable_v<T, E>, //
-    bool Trivially = is_expected_trivially_copy_assignable_v<T, E>>
+    bool Trivially = is_expected_trivially_copy_assignable_v<T, E>
+>
 struct copy_assign_base : move_ctor_base<T, E>
 {
     using move_ctor_base<T, E>::move_ctor_base;
@@ -953,7 +960,9 @@ struct copy_assign_base<T, E, true, false> : move_ctor_base<T, E>
 
     constexpr copy_assign_base &operator=(const copy_assign_base &rhs) //
         noexcept(
-            std::is_nothrow_copy_constructible_v<T> && std::is_nothrow_copy_assignable_v<T> && std::is_nothrow_copy_constructible_v<E> &&
+            std::is_nothrow_copy_constructible_v<T> &&
+            std::is_nothrow_copy_assignable_v<T> &&
+            std::is_nothrow_copy_constructible_v<E> &&
             std::is_nothrow_copy_assignable_v<E>
         )
     {
@@ -1018,9 +1027,11 @@ struct copy_assign_base<void, E, true, false> : move_ctor_base<void, E>
 };
 
 template<class T, class E>
-inline constexpr bool is_expected_move_assignable_v =                        //
-    is_move_assignable_or_void_v<T> && is_move_constructible_or_void_v<T> && //
-    std::is_move_assignable_v<E> && std::is_move_constructible_v<E> &&       //
+inline constexpr bool is_expected_move_assignable_v = //
+    is_move_assignable_or_void_v<T> &&
+    is_move_constructible_or_void_v<T> && //
+    std::is_move_assignable_v<E> &&
+    std::is_move_constructible_v<E> && //
     (is_nothrow_move_constructible_or_void_v<T> || std::is_nothrow_move_constructible_v<E>);
 
 // LWG-4026
@@ -1038,7 +1049,8 @@ template<
     class T,
     class E,
     bool Enabled   = is_expected_move_assignable_v<T, E>, //
-    bool Trivially = is_expected_trivially_move_assignable_v<T, E>>
+    bool Trivially = is_expected_trivially_move_assignable_v<T, E>
+>
 struct move_assign_base : copy_assign_base<T, E>
 {
     using copy_assign_base<T, E>::copy_assign_base;
@@ -1077,7 +1089,9 @@ struct move_assign_base<T, E, true, false> : copy_assign_base<T, E>
 
     constexpr move_assign_base &operator=(move_assign_base &&rhs) //
         noexcept(
-            std::is_nothrow_move_constructible_v<T> && std::is_nothrow_move_assignable_v<T> && std::is_nothrow_move_constructible_v<E> &&
+            std::is_nothrow_move_constructible_v<T> &&
+            std::is_nothrow_move_assignable_v<T> &&
+            std::is_nothrow_move_constructible_v<E> &&
             std::is_nothrow_move_assignable_v<E>
         )
     {
@@ -1174,6 +1188,7 @@ struct default_ctor_base<T, E, false>
 
     constexpr explicit default_ctor_base(default_constructor_tag) {}
 };
+
 } // namespace expected_detail
 
 /// An `expected<T, E>` object is an object that contains the storage for
@@ -1227,7 +1242,8 @@ public:
         class G,                                                                                                  //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *                                  = nullptr, //
         std::enable_if_t<std::is_convertible_v<const U &, T> && std::is_convertible_v<const G &, E>> * = nullptr, //
-        expected_detail::enable_from_other_expected_t<T, E, U, G, const U &, const G &> *              = nullptr>
+        expected_detail::enable_from_other_expected_t<T, E, U, G, const U &, const G &> *              = nullptr
+    >
     constexpr expected(const expected<U, G> &rhs) //
         noexcept(std::is_nothrow_constructible_v<T, const U &> && std::is_nothrow_constructible_v<E, const G &>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -1248,7 +1264,8 @@ public:
         class G,                                                                                                     //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *                                     = nullptr, //
         std::enable_if_t<!(std::is_convertible_v<const U &, T> && std::is_convertible_v<const G &, E>)> * = nullptr, //
-        expected_detail::enable_from_other_expected_t<T, E, U, G, const U &, const G &> *                 = nullptr>
+        expected_detail::enable_from_other_expected_t<T, E, U, G, const U &, const G &> *                 = nullptr
+    >
     constexpr explicit expected(const expected<U, G> &rhs) //
         noexcept(std::is_nothrow_constructible_v<T, const U &> && std::is_nothrow_constructible_v<E, const G &>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -1269,7 +1286,8 @@ public:
         class G,                                                                                  //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *                  = nullptr, //
         std::enable_if_t<std::is_convertible_v<U, T> && std::is_convertible_v<G, E>> * = nullptr, //
-        expected_detail::enable_from_other_expected_t<T, E, U, G, U, G> *              = nullptr>
+        expected_detail::enable_from_other_expected_t<T, E, U, G, U, G> *              = nullptr
+    >
     constexpr expected(expected<U, G> &&rhs) //
         noexcept(std::is_nothrow_constructible_v<T, U> && std::is_nothrow_constructible_v<E, G>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -1290,7 +1308,8 @@ public:
         class G,                                                                                     //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *                     = nullptr, //
         std::enable_if_t<!(std::is_convertible_v<U, T> && std::is_convertible_v<G, E>)> * = nullptr, //
-        expected_detail::enable_from_other_expected_t<T, E, U, G, U, G> *                 = nullptr>
+        expected_detail::enable_from_other_expected_t<T, E, U, G, U, G> *                 = nullptr
+    >
     constexpr explicit expected(expected<U, G> &&rhs) //
         noexcept(std::is_nothrow_constructible_v<T, U> && std::is_nothrow_constructible_v<E, G>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -1312,7 +1331,8 @@ public:
     template<
         class U                                         = std::remove_cv_t<T>,
         std::enable_if_t<std::is_convertible_v<U, T>> * = nullptr,
-        expected_detail::enable_forward_t<T, E, U> *    = nullptr>
+        expected_detail::enable_forward_t<T, E, U> *    = nullptr
+    >
     constexpr expected(U &&v) noexcept(std::is_nothrow_constructible_v<T, U>)
         : expected(std::in_place, std::forward<U>(v))
     {
@@ -1322,7 +1342,8 @@ public:
     template<
         class U                                          = std::remove_cv_t<T>,
         std::enable_if_t<!std::is_convertible_v<U, T>> * = nullptr,
-        expected_detail::enable_forward_t<T, E, U> *     = nullptr>
+        expected_detail::enable_forward_t<T, E, U> *     = nullptr
+    >
     constexpr explicit expected(U &&v) noexcept(std::is_nothrow_constructible_v<T, U>)
         : expected(std::in_place, std::forward<U>(v))
     {
@@ -1334,7 +1355,8 @@ public:
     template<
         class G,                                                             //
         std::enable_if_t<!std::is_convertible_v<const G &, E>> *  = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr
+    >
     explicit constexpr expected(const unexpected<G> &e) noexcept(std::is_nothrow_constructible_v<E, const G &>)
         : impl_base(unexpect, e.error())
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -1345,7 +1367,8 @@ public:
     template<
         class G,                                                             //
         std::enable_if_t<std::is_convertible_v<const G &, E>> *   = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr
+    >
     constexpr expected(unexpected<G> const &e) noexcept(std::is_nothrow_constructible_v<E, const G &>)
         : impl_base(unexpect, e.error())
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -1356,7 +1379,8 @@ public:
     template<
         class G,                                                     //
         std::enable_if_t<!std::is_convertible_v<G, E>> *  = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr
+    >
     explicit constexpr expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<E, G>)
         : impl_base(unexpect, std::move(e.error()))
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -1367,7 +1391,8 @@ public:
     template<
         class G,                                                     //
         std::enable_if_t<std::is_convertible_v<G, E>> *   = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr
+    >
     constexpr expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<E, G>)
         : impl_base(unexpect, std::move(e.error()))
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -1547,7 +1572,8 @@ public:
     template<
         class U,
         class... Args,
-        std::enable_if_t<std::is_nothrow_constructible_v<T, std::initializer_list<U> &, Args &&...>> * = nullptr>
+        std::enable_if_t<std::is_nothrow_constructible_v<T, std::initializer_list<U> &, Args &&...>> * = nullptr
+    >
     constexpr T &emplace(std::initializer_list<U> il, Args &&...args)
     {
         if (has_value())
@@ -1571,13 +1597,18 @@ public:
 
     template<class OT = T, class OE = E>
     constexpr std::enable_if_t<
-        std::is_swappable_v<OT> && std::is_swappable_v<OE> &&                   //
-        std::is_move_constructible_v<OT> && std::is_move_constructible_v<OE> && //
-        (std::is_nothrow_move_constructible_v<OT> || std::is_nothrow_move_constructible_v<OE>)>
+        std::is_swappable_v<OT> &&
+        std::is_swappable_v<OE> && //
+        std::is_move_constructible_v<OT> &&
+        std::is_move_constructible_v<OE> && //
+        (std::is_nothrow_move_constructible_v<OT> || std::is_nothrow_move_constructible_v<OE>)
+    >
     swap(expected &rhs) //
         noexcept(
-            std::is_nothrow_move_constructible_v<T> && std::is_nothrow_swappable_v<T> && //
-            std::is_nothrow_move_constructible_v<E> && std::is_nothrow_swappable_v<E>
+            std::is_nothrow_move_constructible_v<T> &&
+            std::is_nothrow_swappable_v<T> && //
+            std::is_nothrow_move_constructible_v<E> &&
+            std::is_nothrow_swappable_v<E>
         )
     {
         using std::swap;
@@ -2133,10 +2164,14 @@ template<
     class T,
     class E,
     std::enable_if_t<
-        !std::is_void_v<T> &&                                        //
-        std::is_move_constructible_v<T> && std::is_swappable_v<T> && //
-        std::is_move_constructible_v<E> && std::is_swappable_v<E> && //
-        (std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)> * = nullptr>
+        !std::is_void_v<T> && //
+        std::is_move_constructible_v<T> &&
+        std::is_swappable_v<T> && //
+        std::is_move_constructible_v<E> &&
+        std::is_swappable_v<E> && //
+        (std::is_nothrow_move_constructible_v<T> || std::is_nothrow_move_constructible_v<E>)
+    > * = nullptr
+>
 constexpr void swap(expected<T, E> &lhs, expected<T, E> &rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
@@ -2182,7 +2217,8 @@ public:
         class G,                                                                            //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *            = nullptr, //
         std::enable_if_t<std::is_convertible_v<const G &, E>> *                  = nullptr, //
-        expected_detail::enable_from_other_void_expected_t<E, U, G, const G &> * = nullptr>
+        expected_detail::enable_from_other_void_expected_t<E, U, G, const G &> * = nullptr
+    >
     constexpr expected(const expected<U, G> &rhs) //
         noexcept(std::is_nothrow_constructible_v<E, const G &>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -2202,7 +2238,8 @@ public:
         class G,                                                                            //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *            = nullptr, //
         std::enable_if_t<!std::is_convertible_v<const G &, E>> *                 = nullptr, //
-        expected_detail::enable_from_other_void_expected_t<E, U, G, const G &> * = nullptr>
+        expected_detail::enable_from_other_void_expected_t<E, U, G, const G &> * = nullptr
+    >
     constexpr explicit expected(const expected<U, G> &rhs) //
         noexcept(std::is_nothrow_constructible_v<E, const G &>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -2222,7 +2259,8 @@ public:
         class G,                                                                    //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *    = nullptr, //
         std::enable_if_t<std::is_convertible_v<G, E>> *                  = nullptr, //
-        expected_detail::enable_from_other_void_expected_t<E, U, G, G> * = nullptr>
+        expected_detail::enable_from_other_void_expected_t<E, U, G, G> * = nullptr
+    >
     constexpr expected(expected<U, G> &&rhs) //
         noexcept(std::is_nothrow_constructible_v<E, G>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -2242,7 +2280,8 @@ public:
         class G,                                                                    //
         std::enable_if_t<!std::is_same_v<expected<U, G>, expected>> *    = nullptr, //
         std::enable_if_t<!std::is_convertible_v<G, E>> *                 = nullptr, //
-        expected_detail::enable_from_other_void_expected_t<E, U, G, G> * = nullptr>
+        expected_detail::enable_from_other_void_expected_t<E, U, G, G> * = nullptr
+    >
     constexpr explicit expected(expected<U, G> &&rhs) //
         noexcept(std::is_nothrow_constructible_v<E, G>)
         : ctor_base(expected_detail::default_constructor_tag {})
@@ -2263,7 +2302,8 @@ public:
     template<
         class G,                                                             //
         std::enable_if_t<!std::is_convertible_v<const G &, E>> *  = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr
+    >
     explicit constexpr expected(const unexpected<G> &e) noexcept(std::is_nothrow_constructible_v<E, const G &>)
         : impl_base(unexpect, e.error())
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -2274,7 +2314,8 @@ public:
     template<
         class G,                                                             //
         std::enable_if_t<std::is_convertible_v<const G &, E>> *   = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, const G &>> * = nullptr
+    >
     constexpr expected(unexpected<G> const &e) noexcept(std::is_nothrow_constructible_v<E, const G &>)
         : impl_base(unexpect, e.error())
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -2285,7 +2326,8 @@ public:
     template<
         class G,                                                     //
         std::enable_if_t<!std::is_convertible_v<G, E>> *  = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr
+    >
     explicit constexpr expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<E, G>)
         : impl_base(unexpect, std::move(e.error()))
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -2296,7 +2338,8 @@ public:
     template<
         class G,                                                     //
         std::enable_if_t<std::is_convertible_v<G, E>> *   = nullptr, //
-        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr>
+        std::enable_if_t<std::is_constructible_v<E, G>> * = nullptr
+    >
     constexpr expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<E, G>)
         : impl_base(unexpect, std::move(e.error()))
         , ctor_base(expected_detail::default_constructor_tag {})
@@ -2817,7 +2860,8 @@ public:
 // standalone swap for void value type
 template<
     class E, //
-    std::enable_if_t<std::is_move_constructible_v<E> && std::is_swappable_v<E>> * = nullptr>
+    std::enable_if_t<std::is_move_constructible_v<E> && std::is_swappable_v<E>> * = nullptr
+>
 constexpr void swap(expected<void, E> &lhs, expected<void, E> &rhs) noexcept(noexcept(lhs.swap(rhs)))
 {
     lhs.swap(rhs);
