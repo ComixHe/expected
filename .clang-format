@@ -1,10 +1,11 @@
 ---
+# vim: ft=yaml
 Language: Cpp
 BasedOnStyle: Microsoft
 
 AccessModifierOffset: -4
 
-AlignAfterOpenBracket:        BlockIndent
+AlignAfterOpenBracket:        true
 AlignArrayOfStructures:       Left
 AlignConsecutiveAssignments:
   Enabled:          true
@@ -20,7 +21,7 @@ AlignConsecutiveDeclarations:
   Enabled:                   true
   AcrossEmptyLines:          false
   AcrossComments:            true
-  #AlignFunctionDeclarations: false # only for AlignConsecutiveDeclarations # clang-format 20
+  AlignFunctionDeclarations: true # only for AlignConsecutiveDeclarations # clang-format 20
   AlignFunctionPointers:     false # only for AlignConsecutiveDeclarations
 AlignConsecutiveMacros:
   Enabled:          true
@@ -43,6 +44,7 @@ AllowAllConstructorInitializersOnNextLine:  true
 AllowAllParametersOfDeclarationOnNextLine:  true
 
 AllowBreakBeforeNoexceptSpecifier: Never
+AllowBreakBeforeQtProperty:   false # clang-format 22
 
 AllowShortBlocksOnASingleLine:              Empty
 AllowShortCaseExpressionOnASingleLine:      true
@@ -53,6 +55,7 @@ AllowShortFunctionsOnASingleLine:           InlineOnly
 AllowShortIfStatementsOnASingleLine:        Never
 AllowShortLambdasOnASingleLine:             Inline
 AllowShortLoopsOnASingleLine:               false
+AllowShortNamespacesOnASingleLine:          false # clang-format 20
 
 AlwaysBreakAfterReturnType:         None
 AlwaysBreakBeforeMultilineStrings:  true
@@ -64,8 +67,9 @@ AttributeMacros:
   - __ununsed
   - GSL_SUPPRESS
 
-BinPackArguments:   false
-BinPackParameters:  false
+BinPackArguments:      false
+BinPackLongBracedList: true # clang-format 21
+BinPackParameters:     OnePerLine
 
 BitFieldColonSpacing: Both
 BraceWrapping:
@@ -90,12 +94,24 @@ BraceWrapping:
 BracedInitializerIndentWidth: 4
 BreakAdjacentStringLiterals: true
 BreakAfterAttributes: Leave
-BreakAfterReturnType: ExceptShortType
+BreakAfterOpenBracketBracedList: true # clang-format 22
+BreakAfterOpenBracketFunction:   true # clang-format 22
+BreakAfterOpenBracketIf:         true # clang-format 22
+BreakAfterOpenBracketLoop:       true # clang-format 22
+BreakAfterOpenBracketSwitch:     true # clang-format 22
+BreakAfterReturnType: Automatic
 BreakBeforeBinaryOperators:     None # TBD
 BreakBeforeBraces:              Custom
+BreakBeforeCloseBracketBracedList: true # clang-format 22
+BreakBeforeCloseBracketFunction:   true # clang-format 22
+BreakBeforeCloseBracketIf:         true # clang-format 22
+BreakBeforeCloseBracketLoop:       true # clang-format 22
+BreakBeforeCloseBracketSwitch:     true # clang-format 22
 BreakBeforeConceptDeclarations: Always
 BreakBeforeInlineASMColon:      Always
+BreakBeforeTemplateCloser:      true # clang-format 21
 BreakBeforeTernaryOperators:    false
+BreakBinaryOperations: RespectPrecedence # clang-format 20
 BreakConstructorInitializers: BeforeComma
 BreakFunctionDefinitionParameters: false
 BreakInheritanceList: BeforeComma
@@ -108,7 +124,7 @@ CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
-Cpp11BracedListStyle: true
+Cpp11BracedListStyle: FunctionCall # clang-format 22
 
 DeriveLineEnding: true
 DerivePointerAlignment: true
@@ -116,6 +132,7 @@ DerivePointerAlignment: true
 DisableFormat: false
 EmptyLineAfterAccessModifier: Leave
 EmptyLineBeforeAccessModifier: Leave
+EnumTrailingComma: Leave # clang-format 21, not safe if not set to Leave
 FixNamespaceComments: true
 ForEachMacros:
   - foreach
@@ -139,6 +156,7 @@ IncludeIsMainSourceRegex: ""
 IndentAccessModifiers:      false
 IndentCaseBlocks:           false
 IndentCaseLabels:           false
+IndentExportBlock:          false # clang-format 20
 IndentExternBlock:          NoIndent
 IndentGotoLabels:           false
 IndentPPDirectives:         BeforeHash
@@ -159,15 +177,25 @@ KeepEmptyLines:
   AtEndOfFile: true
   AtStartOfBlock: false
   AtStartOfFile: false
+KeepFormFeed: true # clang-format 20
 
 LambdaBodyIndentation: Signature
 MacroBlockBegin:  "" # TBD
 MacroBlockEnd:    "" # TBD
 Macros: [] # TBD
-#MainIncludeChar: Quota # clang-format 20
+# A vector of function-like macros whose invocations should be skipped by RemoveParentheses.
+MacrosSkippedByRemoveParentheses: [] # TBD, clang-format 21
+MainIncludeChar: Quote # clang-format 19
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 NamespaceMacros: [] # TBD A vector of macros which are used to open namespace blocks.
+NumericLiteralCase: # clang-format 22
+  ExponentLetter: Leave
+  HexDigit:       Leave
+  Prefix:         Leave
+  Suffix:         Leave
+
+OneLineFormatOffRegex: '' # clone-format 21
 
 PPIndentWidth: -1 # default to IndentWidth
 PackConstructorInitializers: Never
@@ -175,6 +203,7 @@ PackConstructorInitializers: Never
 # Penalty is hard to understand, leave it to default(style=Microsoft)
 #PenaltyBreakAssignment: 2
 #PenaltyBreakBeforeFirstCallParameter: 19
+#PenaltyBreakBeforeMemberAccess: 150 # clang-format 20
 #PenaltyBreakComment: 300
 #PenaltyBreakFirstLessLess: 120
 #PenaltyBreakOpenParenthesis: 0
@@ -195,6 +224,8 @@ ReferenceAlignment: Left
 
 ReflowComments: false
 
+RemoveEmptyLinesInUnwrappedLines: true # clang-format 20
+RemoveParentheses: Leave # not safe if not Leave
 RemoveSemicolon: false # not safe if true
 
 RequiresClausePosition: OwnLine
@@ -209,6 +240,7 @@ SortUsingDeclarations:  false
 
 SpaceAfterCStyleCast:       true
 SpaceAfterLogicalNot:       false
+SpaceAfterOperatorKeyword:  false # clang-format 21
 SpaceAfterTemplateKeyword:  false
 
 SpaceAroundPointerQualifiers: Default
@@ -267,6 +299,8 @@ WhitespaceSensitiveMacros:
   - STRINGIZE
   - PP_STRINGIZE
   - BOOST_PP_STRINGIZE
+
+WrapNamespaceBodyWithEmptyLines: Always # clang-format 20
 
 ---
 Language: Json
