@@ -17,42 +17,54 @@ namespace
 
 struct CopyableNotMovable
 {
-    CopyableNotMovable() = default;
-    CopyableNotMovable(const CopyableNotMovable &) = default;
+    CopyableNotMovable()                                      = default;
+    CopyableNotMovable(const CopyableNotMovable &)            = default;
     CopyableNotMovable &operator=(const CopyableNotMovable &) = default;
-    CopyableNotMovable(CopyableNotMovable &&) = delete;
-    CopyableNotMovable &operator=(CopyableNotMovable &&) = delete;
+    CopyableNotMovable(CopyableNotMovable &&)                 = delete;
+    CopyableNotMovable &operator=(CopyableNotMovable &&)      = delete;
 };
 
 struct NotCopyableNotMovable
 {
-    NotCopyableNotMovable() = default;
-    NotCopyableNotMovable(const NotCopyableNotMovable &) = delete;
+    NotCopyableNotMovable()                                         = default;
+    NotCopyableNotMovable(const NotCopyableNotMovable &)            = delete;
     NotCopyableNotMovable &operator=(const NotCopyableNotMovable &) = delete;
-    NotCopyableNotMovable(NotCopyableNotMovable &&) = delete;
-    NotCopyableNotMovable &operator=(NotCopyableNotMovable &&) = delete;
+    NotCopyableNotMovable(NotCopyableNotMovable &&)                 = delete;
+    NotCopyableNotMovable &operator=(NotCopyableNotMovable &&)      = delete;
 };
 
 struct MoveOnly
 {
     int value;
-    MoveOnly() : value(0) {}
-    MoveOnly(int v) : value(v) {}
-    MoveOnly(const MoveOnly &) = delete;
+    MoveOnly()
+        : value(0)
+    {
+    }
+    MoveOnly(int v)
+        : value(v)
+    {
+    }
+    MoveOnly(const MoveOnly &)            = delete;
     MoveOnly &operator=(const MoveOnly &) = delete;
-    MoveOnly(MoveOnly &&) = default;
-    MoveOnly &operator=(MoveOnly &&) = default;
+    MoveOnly(MoveOnly &&)                 = default;
+    MoveOnly &operator=(MoveOnly &&)      = default;
 };
 
 struct StatefulCopyableNotMovable
 {
     int value;
-    StatefulCopyableNotMovable() : value(0) {}
-    StatefulCopyableNotMovable(int v) : value(v) {}
-    StatefulCopyableNotMovable(const StatefulCopyableNotMovable &) = default;
+    StatefulCopyableNotMovable()
+        : value(0)
+    {
+    }
+    StatefulCopyableNotMovable(int v)
+        : value(v)
+    {
+    }
+    StatefulCopyableNotMovable(const StatefulCopyableNotMovable &)            = default;
     StatefulCopyableNotMovable &operator=(const StatefulCopyableNotMovable &) = default;
-    StatefulCopyableNotMovable(StatefulCopyableNotMovable &&) = delete;
-    StatefulCopyableNotMovable &operator=(StatefulCopyableNotMovable &&) = delete;
+    StatefulCopyableNotMovable(StatefulCopyableNotMovable &&)                 = delete;
+    StatefulCopyableNotMovable &operator=(StatefulCopyableNotMovable &&)      = delete;
 };
 
 } // namespace
@@ -68,8 +80,7 @@ TEST_CASE("expected<void, E> is trivially move-assignable when E is trivial", "[
     STATIC_REQUIRE(std::is_nothrow_move_assignable_v<expected<void, int>>);
 }
 
-TEST_CASE("expected<void, E> is move-assignable via copy fallback when E is copyable but not movable",
-          "[LWG-4025]")
+TEST_CASE("expected<void, E> is move-assignable via copy fallback when E is copyable but not movable", "[LWG-4025]")
 {
     STATIC_REQUIRE(std::is_move_assignable_v<expected<void, CopyableNotMovable>>);
     STATIC_REQUIRE(std::is_trivially_move_assignable_v<expected<void, CopyableNotMovable>>);
@@ -172,8 +183,7 @@ TEST_CASE("expected<T, E> is trivially move-assignable when E is trivial", "[LWG
     STATIC_REQUIRE(std::is_nothrow_move_assignable_v<expected<int, int>>);
 }
 
-TEST_CASE("expected<T, E> is move-assignable via copy fallback when E is copyable but not movable",
-          "[LWG-4025]")
+TEST_CASE("expected<T, E> is move-assignable via copy fallback when E is copyable but not movable", "[LWG-4025]")
 {
     STATIC_REQUIRE(std::is_move_assignable_v<expected<int, CopyableNotMovable>>);
     STATIC_REQUIRE(std::is_trivially_move_assignable_v<expected<int, CopyableNotMovable>>);
