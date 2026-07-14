@@ -40,7 +40,7 @@ int main()
     if (!ev.has_value())
         return 8;
 
-    zeus::expected<void, int> ev2{zeus::unexpect, 10};
+    zeus::expected<void, int> ev2 {zeus::unexpect, 10};
     if (ev2.has_value())
         return 9;
     if (ev2.error() != 10)

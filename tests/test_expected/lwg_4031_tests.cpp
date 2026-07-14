@@ -6,11 +6,13 @@ using namespace zeus;
 
 namespace
 {
+
 // Exposing all members for testing
 struct test_bad_expected_access : public bad_expected_access<void>
 {
     using bad_expected_access<void>::bad_expected_access;
 };
+
 }
 
 TEST_CASE("bad_expected_access<void> special members are noexcept", "[LWG-4031]")
