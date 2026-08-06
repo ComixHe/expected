@@ -1290,7 +1290,8 @@ public:
     constexpr expected(
         const expected<U, G> &rhs
     ) noexcept(std::is_nothrow_constructible_v<T, const U &> && std::is_nothrow_constructible_v<E, const G &>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::no_init)
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
         if (rhs.has_value())
         {
@@ -1313,7 +1314,8 @@ public:
     constexpr explicit expected(
         const expected<U, G> &rhs
     ) noexcept(std::is_nothrow_constructible_v<T, const U &> && std::is_nothrow_constructible_v<E, const G &>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::no_init)
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
         if (rhs.has_value())
         {
@@ -1334,7 +1336,8 @@ public:
         expected_detail::enable_from_other_expected_t<T, E, U, G, U, G> *              = nullptr
     >
     constexpr expected(expected<U, G> &&rhs) noexcept(std::is_nothrow_constructible_v<T, U> && std::is_nothrow_constructible_v<E, G>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::no_init)
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
         if (rhs.has_value())
         {
@@ -1357,7 +1360,8 @@ public:
     constexpr explicit expected(
         expected<U, G> &&rhs
     ) noexcept(std::is_nothrow_constructible_v<T, U> && std::is_nothrow_constructible_v<E, G>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::no_init)
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
         if (rhs.has_value())
         {
