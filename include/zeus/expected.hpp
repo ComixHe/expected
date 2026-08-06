@@ -144,6 +144,28 @@ struct is_equality_result_convertible_to_bool<Lhs, Rhs, std::void_t<decltype(std
 template<class Lhs, class Rhs>
 inline constexpr bool is_equality_result_convertible_to_bool_v = is_equality_result_convertible_to_bool<Lhs, Rhs>::value;
 
+constexpr bool implicitly_convert_to_bool(bool value) noexcept
+{
+    return value;
+}
+
+template<class Lhs, class Rhs, class = void>
+struct is_nothrow_equality_result_convertible_to_bool : std::false_type
+{
+};
+
+template<class Lhs, class Rhs>
+struct is_nothrow_equality_result_convertible_to_bool<
+    Lhs,
+    Rhs,
+    std::void_t<decltype(implicitly_convert_to_bool(std::declval<const Lhs &>() == std::declval<const Rhs &>()))>
+> : std::bool_constant<noexcept(implicitly_convert_to_bool(std::declval<const Lhs &>() == std::declval<const Rhs &>()))>
+{
+};
+
+template<class Lhs, class Rhs>
+inline constexpr bool is_nothrow_equality_result_convertible_to_bool_v = is_nothrow_equality_result_convertible_to_bool<Lhs, Rhs>::value;
+
 } // namespace expected_detail
 
 template<class E>
@@ -2057,7 +2079,10 @@ public:
             expected_detail::is_equality_result_convertible_to_bool_v<E, E2>,
         bool
     >
-    operator==(const expected &x, const expected<T2, E2> &y) noexcept(noexcept(*x == *y) && noexcept(x.error() == y.error()))
+    operator==(const expected &x, const expected<T2, E2> &y) noexcept(
+        expected_detail::is_nothrow_equality_result_convertible_to_bool_v<T, T2> &&
+        expected_detail::is_nothrow_equality_result_convertible_to_bool_v<E, E2>
+    )
     {
         if (x.has_value() != y.has_value())
         {
@@ -2089,7 +2114,7 @@ public:
     [[nodiscard]] friend constexpr std::enable_if_t<
         !expected_detail::is_specialization_v<T2, zeus::expected> && expected_detail::is_equality_result_convertible_to_bool_v<T, T2>,
         bool
-    > operator==(const expected &x, const T2 &v) noexcept(noexcept(*x == v))
+    > operator==(const expected &x, const T2 &v) noexcept(expected_detail::is_nothrow_equality_result_convertible_to_bool_v<T, T2>)
     {
         if (x.has_value())
         {
@@ -2114,7 +2139,7 @@ public:
     template<class E2>
     [[nodiscard]] friend constexpr std::enable_if_t<expected_detail::is_equality_result_convertible_to_bool_v<E, E2>, bool> operator==(
         const expected &x, const unexpected<E2> &e
-    ) noexcept(noexcept(x.error() == e.error()))
+    ) noexcept(expected_detail::is_nothrow_equality_result_convertible_to_bool_v<E, E2>)
     {
         if (x.has_value())
         {
@@ -2752,7 +2777,9 @@ public:
     template<class T2, class E2>
     [[nodiscard]] friend constexpr std::
         enable_if_t<std::is_void_v<T2> && expected_detail::is_equality_result_convertible_to_bool_v<E, E2>, bool>
-        operator==(const expected &x, const expected<T2, E2> &y) noexcept(noexcept(x.error() == y.error()))
+        operator==(
+            const expected &x, const expected<T2, E2> &y
+        ) noexcept(expected_detail::is_nothrow_equality_result_convertible_to_bool_v<E, E2>)
     {
         if (x.has_value() != y.has_value())
         {
@@ -2781,7 +2808,7 @@ public:
     template<class E2>
     [[nodiscard]] friend constexpr std::enable_if_t<expected_detail::is_equality_result_convertible_to_bool_v<E, E2>, bool> operator==(
         const expected &x, const unexpected<E2> &e
-    ) noexcept(noexcept(x.error() == e.error()))
+    ) noexcept(expected_detail::is_nothrow_equality_result_convertible_to_bool_v<E, E2>)
     {
         if (x.has_value())
         {
