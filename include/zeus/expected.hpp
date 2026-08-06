@@ -242,6 +242,11 @@ public:
     template<class E2>
     friend constexpr bool operator==(const unexpected &lhs, const unexpected<E2> &rhs) noexcept(noexcept(lhs.error() == rhs.error()))
     {
+        // [expected.un.eq] Mandates
+        static_assert(
+            expected_detail::is_equality_result_convertible_to_bool_v<E, E2>,
+            "The expression lhs.error() == rhs.error() is well-formed and its result is convertible to bool"
+        );
         return lhs.error() == rhs.error();
     }
     template<class E2>
