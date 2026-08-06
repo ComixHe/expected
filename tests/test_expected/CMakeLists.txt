@@ -2,6 +2,7 @@ project(test_expected LANGUAGES CXX)
 
 set(SOURCES
     base_tests.cpp
+    converting_constructor_tests.cpp
     monadic_tests.cpp
     noexcept_tests.cpp
     equality_tests.cpp
