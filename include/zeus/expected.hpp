@@ -371,11 +371,52 @@ using enable_from_other_void_expected_t = std::enable_if_t<
 namespace expected_detail
 {
 
-struct no_init_t
+// Constructing the active alternative inside storage_base ensures its
+// destructor only ever observes a fully initialized value or error.
+struct construct_from_expected_t
 {
-    explicit no_init_t() = default;
+    explicit construct_from_expected_t() = default;
 };
-inline constexpr no_init_t no_init {};
+inline constexpr construct_from_expected_t construct_from_expected {};
+
+template<class Rhs>
+constexpr bool expected_source_has_value(const Rhs &rhs) noexcept
+{
+    if constexpr (expected_detail::is_specialization_v<expected_detail::remove_cvref_t<Rhs>, expected>)
+    {
+        return rhs.has_value();
+    }
+    else
+    {
+        return rhs.m_has_val;
+    }
+}
+
+template<class Rhs>
+constexpr decltype(auto) expected_source_value(Rhs &&rhs) noexcept
+{
+    if constexpr (expected_detail::is_specialization_v<expected_detail::remove_cvref_t<Rhs>, expected>)
+    {
+        return *std::forward<Rhs>(rhs);
+    }
+    else
+    {
+        return (std::forward<Rhs>(rhs).m_val);
+    }
+}
+
+template<class Rhs>
+constexpr decltype(auto) expected_source_error(Rhs &&rhs) noexcept
+{
+    if constexpr (expected_detail::is_specialization_v<expected_detail::remove_cvref_t<Rhs>, expected>)
+    {
+        return std::forward<Rhs>(rhs).error();
+    }
+    else
+    {
+        return (std::forward<Rhs>(rhs).m_unexpect);
+    }
+}
 
 struct construct_with_invoke_result_t
 {
@@ -458,10 +499,23 @@ struct storage_base
         , m_has_val(true)
     {
     }
-    constexpr storage_base(no_init_t) noexcept
-        : m_no_init()
-        , m_has_val(false)
+
+    template<class Rhs>
+    constexpr storage_base(construct_from_expected_t, Rhs &&rhs) noexcept(
+        std::is_nothrow_constructible_v<T, decltype(expected_detail::expected_source_value(std::declval<Rhs>()))> &&
+        std::is_nothrow_constructible_v<E, decltype(expected_detail::expected_source_error(std::declval<Rhs>()))>
+    )
+        : m_dummy()
+        , m_has_val(expected_detail::expected_source_has_value(rhs))
     {
+        if (m_has_val)
+        {
+            expected_detail::construct_at(std::addressof(m_val), expected_detail::expected_source_value(std::forward<Rhs>(rhs)));
+        }
+        else
+        {
+            expected_detail::construct_at(std::addressof(m_unexpect), expected_detail::expected_source_error(std::forward<Rhs>(rhs)));
+        }
     }
 
     template<class... Args, std::enable_if_t<std::is_constructible_v<T, Args &&...>> * = nullptr>
@@ -522,7 +576,7 @@ struct storage_base
     {
         T    m_val;
         E    m_unexpect;
-        char m_no_init;
+        char m_dummy;
     };
     bool m_has_val;
 };
@@ -540,10 +594,23 @@ struct storage_base<T, E, false>
         , m_has_val(true)
     {
     }
-    constexpr storage_base(no_init_t) noexcept
-        : m_no_init()
-        , m_has_val(false)
+
+    template<class Rhs>
+    constexpr storage_base(construct_from_expected_t, Rhs &&rhs) noexcept(
+        std::is_nothrow_constructible_v<T, decltype(expected_detail::expected_source_value(std::declval<Rhs>()))> &&
+        std::is_nothrow_constructible_v<E, decltype(expected_detail::expected_source_error(std::declval<Rhs>()))>
+    )
+        : m_dummy()
+        , m_has_val(expected_detail::expected_source_has_value(rhs))
     {
+        if (m_has_val)
+        {
+            expected_detail::construct_at(std::addressof(m_val), expected_detail::expected_source_value(std::forward<Rhs>(rhs)));
+        }
+        else
+        {
+            expected_detail::construct_at(std::addressof(m_unexpect), expected_detail::expected_source_error(std::forward<Rhs>(rhs)));
+        }
     }
 
     template<class... Args, std::enable_if_t<std::is_constructible_v<T, Args &&...>> * = nullptr>
@@ -622,7 +689,7 @@ struct storage_base<T, E, false>
     {
         T    m_val;
         E    m_unexpect;
-        char m_no_init;
+        char m_dummy;
     };
     bool m_has_val;
 };
@@ -641,10 +708,17 @@ struct storage_base<void, E, true>
     {
     }
 
-    constexpr storage_base(no_init_t) noexcept
+    template<class Rhs>
+    constexpr storage_base(
+        construct_from_expected_t, Rhs &&rhs
+    ) noexcept(std::is_nothrow_constructible_v<E, decltype(expected_detail::expected_source_error(std::declval<Rhs>()))>)
         : m_val()
-        , m_has_val(false)
+        , m_has_val(expected_detail::expected_source_has_value(rhs))
     {
+        if (!m_has_val)
+        {
+            expected_detail::construct_at(std::addressof(m_unexpect), expected_detail::expected_source_error(std::forward<Rhs>(rhs)));
+        }
     }
 
     constexpr explicit storage_base(std::in_place_t) noexcept
@@ -705,10 +779,17 @@ struct storage_base<void, E, false>
     {
     }
 
-    constexpr storage_base(no_init_t) noexcept
+    template<class Rhs>
+    constexpr storage_base(
+        construct_from_expected_t, Rhs &&rhs
+    ) noexcept(std::is_nothrow_constructible_v<E, decltype(expected_detail::expected_source_error(std::declval<Rhs>()))>)
         : m_val()
-        , m_has_val(false)
+        , m_has_val(expected_detail::expected_source_has_value(rhs))
     {
+        if (!m_has_val)
+        {
+            expected_detail::construct_at(std::addressof(m_unexpect), expected_detail::expected_source_error(std::forward<Rhs>(rhs)));
+        }
     }
 
     constexpr explicit storage_base(std::in_place_t) noexcept
@@ -871,16 +952,8 @@ struct copy_ctor_base<T, E, true, false> : operations_base<T, E>
     constexpr copy_ctor_base(
         const copy_ctor_base &rhs
     ) noexcept(is_nothrow_copy_constructible_or_void_v<T> && std::is_nothrow_copy_constructible_v<E>)
-        : operations_base<T, E>(no_init)
+        : operations_base<T, E>(construct_from_expected, rhs)
     {
-        if (rhs.m_has_val)
-        {
-            this->construct_with(rhs);
-        }
-        else
-        {
-            this->construct_error(rhs.geterr());
-        }
     }
 
     copy_ctor_base(copy_ctor_base &&rhs)                 = default;
@@ -927,16 +1000,8 @@ struct move_ctor_base<T, E, true, false> : copy_ctor_base<T, E>
     constexpr move_ctor_base(
         move_ctor_base &&rhs
     ) noexcept(is_nothrow_move_constructible_or_void_v<T> && std::is_nothrow_move_constructible_v<E>)
-        : copy_ctor_base<T, E>(no_init)
+        : copy_ctor_base<T, E>(construct_from_expected, std::move(rhs))
     {
-        if (rhs.m_has_val)
-        {
-            this->construct_with(std::move(rhs));
-        }
-        else
-        {
-            this->construct_error(std::move(rhs.geterr()));
-        }
     }
 
     move_ctor_base &operator=(const move_ctor_base &rhs) = default;
@@ -1290,17 +1355,9 @@ public:
     constexpr expected(
         const expected<U, G> &rhs
     ) noexcept(std::is_nothrow_constructible_v<T, const U &> && std::is_nothrow_constructible_v<E, const G &>)
-        : impl_base(expected_detail::no_init)
+        : impl_base(expected_detail::construct_from_expected, rhs)
         , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct(*rhs);
-        }
-        else
-        {
-            this->construct_error(rhs.error());
-        }
     }
 
     // explicit const reference
@@ -1314,17 +1371,9 @@ public:
     constexpr explicit expected(
         const expected<U, G> &rhs
     ) noexcept(std::is_nothrow_constructible_v<T, const U &> && std::is_nothrow_constructible_v<E, const G &>)
-        : impl_base(expected_detail::no_init)
+        : impl_base(expected_detail::construct_from_expected, rhs)
         , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct(*rhs);
-        }
-        else
-        {
-            this->construct_error(rhs.error());
-        }
     }
 
     // implicit rvalue
@@ -1336,17 +1385,9 @@ public:
         expected_detail::enable_from_other_expected_t<T, E, U, G, U, G> *              = nullptr
     >
     constexpr expected(expected<U, G> &&rhs) noexcept(std::is_nothrow_constructible_v<T, U> && std::is_nothrow_constructible_v<E, G>)
-        : impl_base(expected_detail::no_init)
+        : impl_base(expected_detail::construct_from_expected, std::move(rhs))
         , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct(std::move(*rhs));
-        }
-        else
-        {
-            this->construct_error(std::move(rhs.error()));
-        }
     }
 
     // explicit rvalue
@@ -1360,17 +1401,9 @@ public:
     constexpr explicit expected(
         expected<U, G> &&rhs
     ) noexcept(std::is_nothrow_constructible_v<T, U> && std::is_nothrow_constructible_v<E, G>)
-        : impl_base(expected_detail::no_init)
+        : impl_base(expected_detail::construct_from_expected, std::move(rhs))
         , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct(std::move(*rhs));
-        }
-        else
-        {
-            this->construct_error(std::move(rhs.error()));
-        }
     }
 
     // template <class U = T>
@@ -2230,16 +2263,9 @@ public:
         expected_detail::enable_from_other_void_expected_t<E, U, G, const G &> * = nullptr
     >
     constexpr expected(const expected<U, G> &rhs) noexcept(std::is_nothrow_constructible_v<E, const G &>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::construct_from_expected, rhs)
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct();
-        }
-        else
-        {
-            this->construct_error(rhs.error());
-        }
     }
 
     template<
@@ -2250,16 +2276,9 @@ public:
         expected_detail::enable_from_other_void_expected_t<E, U, G, const G &> * = nullptr
     >
     constexpr explicit expected(const expected<U, G> &rhs) noexcept(std::is_nothrow_constructible_v<E, const G &>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::construct_from_expected, rhs)
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct();
-        }
-        else
-        {
-            this->construct_error(rhs.error());
-        }
     }
 
     template<
@@ -2270,16 +2289,9 @@ public:
         expected_detail::enable_from_other_void_expected_t<E, U, G, G> * = nullptr
     >
     constexpr expected(expected<U, G> &&rhs) noexcept(std::is_nothrow_constructible_v<E, G>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::construct_from_expected, std::move(rhs))
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct();
-        }
-        else
-        {
-            this->construct_error(std::move(rhs.error()));
-        }
     }
 
     template<
@@ -2290,16 +2302,9 @@ public:
         expected_detail::enable_from_other_void_expected_t<E, U, G, G> * = nullptr
     >
     constexpr explicit expected(expected<U, G> &&rhs) noexcept(std::is_nothrow_constructible_v<E, G>)
-        : ctor_base(expected_detail::default_constructor_tag {})
+        : impl_base(expected_detail::construct_from_expected, std::move(rhs))
+        , ctor_base(expected_detail::default_constructor_tag {})
     {
-        if (rhs.has_value())
-        {
-            this->construct();
-        }
-        else
-        {
-            this->construct_error(std::move(rhs.error()));
-        }
     }
 
     // constructors for unexpected<G>
