@@ -10,7 +10,7 @@ namespace
 struct ConstructibleFromUnexpect
 {
     ConstructibleFromUnexpect() = default;
-    explicit ConstructibleFromUnexpect([[maybe_unused]] unexpect_t ut) {}
+    explicit ConstructibleFromUnexpect(unexpect_t) {}
 };
 
 } // namespace
