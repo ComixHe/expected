@@ -79,31 +79,39 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        gcc:
+          - version: 11
+            os: ubuntu-22.04
+          - version: 13
+            os: ubuntu-24.04
+          - version: 15
+            os: ubuntu-24.04
         cppstd: ['17', '20', '23']
         build-type: [Debug, Release]
         include:
-          - os: ubuntu-22.04
-            gcc-version: 11
-          - os: ubuntu-24.04
-            gcc-version: 13
           - build-type: Debug
             cmake-preset: conan-debug
           - build-type: Release
             cmake-preset: conan-release
 
-    name: GCC ${{ matrix.gcc-version }} - C++${{ matrix.cppstd }} - ${{ matrix.build-type }}
+    name: GCC ${{ matrix.gcc.version }} - C++${{ matrix.cppstd }} - ${{ matrix.build-type }}
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.gcc.os }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup GCC
+        if: matrix.gcc.version == 15
+        uses: egor-tensin/setup-gcc@v2
+        with:
+          version: ${{ matrix.gcc.version }}
 
       - name: Check GCC Version
         shell: bash
         run: |
           gcc -dumpversion
-          (( $(gcc -dumpversion | cut -d. -f1) == ${{ matrix.gcc-version }} ))
+          (( $(gcc -dumpversion | cut -d. -f1) == ${{ matrix.gcc.version }} ))
 
       - name: Install Conan
         uses: turtlebrowser/get-conan@main
