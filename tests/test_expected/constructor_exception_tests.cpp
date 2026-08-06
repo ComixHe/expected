@@ -20,6 +20,21 @@ struct SourceError
 };
 
 template<int Id>
+class ThrowingValueDestructorProbe
+{
+public:
+    ThrowingValueDestructorProbe(const SourceValue &) { throw ConstructorException {}; }
+
+    ~ThrowingValueDestructorProbe() { ++destructor_calls_; }
+
+    static int  destructor_calls() noexcept { return destructor_calls_; }
+    static void reset() noexcept { destructor_calls_ = 0; }
+
+private:
+    inline static int destructor_calls_ = 0;
+};
+
+template<int Id>
 class ErrorDestructorProbe
 {
 public:
@@ -137,6 +152,22 @@ void require_no_destructor_for_unconstructed_error(Operation &&operation)
 }
 
 } // namespace
+
+TEST_CASE("failed construction does not destroy either unconstructed alternative", "[expected][constructor][exception-safety][lifetime]")
+{
+    using Source     = zeus::expected<SourceValue, SourceError>;
+    using ValueProbe = ThrowingValueDestructorProbe<0>;
+    using ErrorProbe = ErrorDestructorProbe<0>;
+    using Target     = zeus::expected<ValueProbe, ErrorProbe>;
+
+    const Source source(std::in_place);
+    ValueProbe::reset();
+    ErrorProbe::reset();
+
+    REQUIRE_THROWS_AS(static_cast<void>(Target(source)), ConstructorException);
+    REQUIRE(ValueProbe::destructor_calls() == 0);
+    REQUIRE(ErrorProbe::destructor_calls() == 0);
+}
 
 TEST_CASE(
     "implicit lvalue converting constructor does not destroy an unconstructed error", "[expected][constructor][exception-safety][lifetime]"
