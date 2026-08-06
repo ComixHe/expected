@@ -199,14 +199,20 @@ TEST_CASE("P3379R0 constrains expected-to-unexpected comparison", "[P3379R0][equ
 
 TEST_CASE("P3379R0 constrains expected<void, E> comparisons", "[P3379R0][equality]")
 {
+    using ValidExpected     = expected<void, int>;
     using InvalidExpected   = expected<void, NonBooleanComparable>;
     using InvalidUnexpected = zeus::unexpected<NonBooleanComparable>;
 
-    STATIC_REQUIRE(has_equal_to_v<expected<void, int>, expected<void, int>>);
+    STATIC_REQUIRE(has_equal_to_v<ValidExpected, ValidExpected>);
     STATIC_REQUIRE_FALSE(has_equal_to_v<InvalidExpected, InvalidExpected>);
     STATIC_REQUIRE_FALSE(has_not_equal_to_v<InvalidExpected, InvalidExpected>);
     STATIC_REQUIRE_FALSE(has_equal_to_v<InvalidExpected, InvalidUnexpected>);
     STATIC_REQUIRE_FALSE(has_not_equal_to_v<InvalidExpected, InvalidUnexpected>);
+    STATIC_REQUIRE_FALSE(has_equal_to_v<InvalidUnexpected, InvalidExpected>);
+    STATIC_REQUIRE_FALSE(has_not_equal_to_v<InvalidUnexpected, InvalidExpected>);
+
+    STATIC_REQUIRE_FALSE(has_equal_to_v<int, ValidExpected>);
+    STATIC_REQUIRE_FALSE(has_not_equal_to_v<int, ValidExpected>);
 }
 
 TEST_CASE("P3379R0 leaves unexpected available to the value comparison overload", "[P3379R0][equality]")
