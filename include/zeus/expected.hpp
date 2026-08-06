@@ -2093,7 +2093,7 @@ public:
     {
         if (x.has_value())
         {
-            return static_cast<bool>(*x == v);
+            return *x == v;
         }
         else
         {
@@ -2122,7 +2122,7 @@ public:
         }
         else
         {
-            return static_cast<bool>(x.error() == e.error());
+            return x.error() == e.error();
         }
     }
 #if ZEUS_EXPECTED_CPLUSPLUS < 202'002L
@@ -2758,9 +2758,13 @@ public:
         {
             return false;
         }
+        else if (x.has_value())
+        {
+            return true;
+        }
         else
         {
-            return x.has_value() || static_cast<bool>(x.error() == y.error());
+            return x.error() == y.error();
         }
     }
 #if ZEUS_EXPECTED_CPLUSPLUS < 202'002L
@@ -2785,7 +2789,7 @@ public:
         }
         else
         {
-            return static_cast<bool>(x.error() == e.error());
+            return x.error() == e.error();
         }
     }
 #if ZEUS_EXPECTED_CPLUSPLUS < 202'002L
