@@ -72,6 +72,48 @@ struct ValueError
 {
 };
 
+struct FallbackError
+{
+};
+
+struct UnexpectedOperandError
+{
+};
+
+struct ValueComparableToUnexpected
+{
+    bool equal;
+};
+
+bool operator==(const ValueComparableToUnexpected &value, const zeus::unexpected<UnexpectedOperandError> &)
+{
+    return value.equal;
+}
+
+struct ComparableExpectedError
+{
+    int value;
+};
+
+struct ComparableUnexpectedError
+{
+    int value;
+};
+
+bool operator==(const ComparableExpectedError &lhs, const ComparableUnexpectedError &rhs)
+{
+    return lhs.value == rhs.value;
+}
+
+struct AlsoComparableToUnexpected
+{
+};
+
+bool operator==(const AlsoComparableToUnexpected &, const zeus::unexpected<ComparableUnexpectedError> &)
+{
+    return true;
+}
+
 } // namespace
 
 TEST_CASE("P3379R0 constrains expected-to-expected comparison", "[P3379R0][equality]")
@@ -165,4 +207,31 @@ TEST_CASE("P3379R0 constrains expected<void, E> comparisons", "[P3379R0][equalit
     STATIC_REQUIRE_FALSE(has_not_equal_to_v<InvalidExpected, InvalidExpected>);
     STATIC_REQUIRE_FALSE(has_equal_to_v<InvalidExpected, InvalidUnexpected>);
     STATIC_REQUIRE_FALSE(has_not_equal_to_v<InvalidExpected, InvalidUnexpected>);
+}
+
+TEST_CASE("P3379R0 leaves unexpected available to the value comparison overload", "[P3379R0][equality]")
+{
+    const zeus::unexpected<UnexpectedOperandError>             operand {UnexpectedOperandError {}};
+    const expected<ValueComparableToUnexpected, FallbackError> matching_value {ValueComparableToUnexpected {true}};
+    const expected<ValueComparableToUnexpected, FallbackError> nonmatching_value {ValueComparableToUnexpected {false}};
+    const expected<ValueComparableToUnexpected, FallbackError> error_value {unexpect, FallbackError {}};
+
+    CHECK(matching_value == operand);
+    CHECK(operand == matching_value);
+    CHECK_FALSE(matching_value != operand);
+    CHECK_FALSE(operand != matching_value);
+    CHECK_FALSE(nonmatching_value == operand);
+    CHECK_FALSE(error_value == operand);
+}
+
+TEST_CASE("P3379R0 prefers the unexpected overload when its constraint is satisfied", "[P3379R0][equality]")
+{
+    const zeus::unexpected<ComparableUnexpectedError>                   operand {ComparableUnexpectedError {42}};
+    const expected<AlsoComparableToUnexpected, ComparableExpectedError> value {AlsoComparableToUnexpected {}};
+    const expected<AlsoComparableToUnexpected, ComparableExpectedError> error {unexpect, ComparableExpectedError {42}};
+
+    CHECK_FALSE(value == operand);
+    CHECK_FALSE(operand == value);
+    CHECK(error == operand);
+    CHECK(operand == error);
 }
