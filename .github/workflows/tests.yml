@@ -79,31 +79,39 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        gcc:
+          - version: 11
+            os: ubuntu-22.04
+          - version: 13
+            os: ubuntu-24.04
+          - version: 15
+            os: ubuntu-24.04
         cppstd: ['17', '20', '23']
         build-type: [Debug, Release]
         include:
-          - os: ubuntu-22.04
-            gcc-version: 11
-          - os: ubuntu-24.04
-            gcc-version: 13
           - build-type: Debug
             cmake-preset: conan-debug
           - build-type: Release
             cmake-preset: conan-release
 
-    name: GCC ${{ matrix.gcc-version }} - C++${{ matrix.cppstd }} - ${{ matrix.build-type }}
+    name: GCC ${{ matrix.gcc.version }} - C++${{ matrix.cppstd }} - ${{ matrix.build-type }}
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.gcc.os }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup GCC
+        if: matrix.gcc.version == 15
+        uses: egor-tensin/setup-gcc@v2
+        with:
+          version: ${{ matrix.gcc.version }}
 
       - name: Check GCC Version
         shell: bash
         run: |
           gcc -dumpversion
-          (( $(gcc -dumpversion | cut -d. -f1) == ${{ matrix.gcc-version }} ))
+          (( $(gcc -dumpversion | cut -d. -f1) == ${{ matrix.gcc.version }} ))
 
       - name: Install Conan
         uses: turtlebrowser/get-conan@main
@@ -112,6 +120,166 @@ jobs:
         run: |
           conan --version
           conan profile detect
+
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install dependencies
+        run: >
+          conan install .
+          -s compiler.cppstd=${{ matrix.cppstd }}
+          -s build_type=${{ matrix.build-type }}
+          -b missing
+
+      - name: CMake Configure
+        run: |
+          cmake --list-presets
+          cmake --preset ${{ matrix.cmake-preset }}
+
+      - name: Build
+        run: |
+          cmake --build --list-presets
+          cmake --build --preset ${{ matrix.cmake-preset }}
+
+      - name: Test
+        run: |
+          ctest --list-presets
+          ctest --preset ${{ matrix.cmake-preset }}
+
+  test-on-gcc-8:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        cppstd: ['17']
+        build-type: [Debug, Release]
+        include:
+          - build-type: Debug
+            cmake-preset: conan-debug
+          - build-type: Release
+            cmake-preset: conan-release
+
+    name: GCC 8 - C++${{ matrix.cppstd }} - ${{ matrix.build-type }}
+
+    runs-on: ubuntu-22.04
+    container: ubuntu:20.04
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      CC: gcc-8
+      CXX: g++-8
+
+    steps:
+      - name: Prepare container
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            ca-certificates \
+            gcc-8 \
+            g++-8 \
+            git \
+            make \
+            python3-pip \
+            unzip
+
+      - uses: actions/checkout@v4
+
+      - name: Check GCC Version
+        run: |
+          compiler_version="$("$CC" -dumpfullversion -dumpversion)"
+          echo "$compiler_version"
+          [[ "${compiler_version%%.*}" == 8 ]]
+
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Setup Conan
+        run: |
+          conan --version
+          conan profile detect
+
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install dependencies
+        run: >
+          conan install .
+          -s compiler.cppstd=${{ matrix.cppstd }}
+          -s build_type=${{ matrix.build-type }}
+          -b missing
+
+      - name: CMake Configure
+        run: |
+          cmake --list-presets
+          cmake --preset ${{ matrix.cmake-preset }}
+
+      - name: Build
+        run: |
+          cmake --build --list-presets
+          cmake --build --preset ${{ matrix.cmake-preset }}
+
+      - name: Test
+        run: |
+          ctest --list-presets
+          ctest --preset ${{ matrix.cmake-preset }}
+
+  test-on-clang-libstdcxx:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        clang-version: [11, 14, 18, 22]
+        cppstd: ['17', '20', '23']
+        build-type: [Debug, Release]
+        exclude:
+          - clang-version: 11
+            cppstd: '23'
+        include:
+          - build-type: Debug
+            cmake-preset: conan-debug
+          - build-type: Release
+            cmake-preset: conan-release
+
+    name: Clang ${{ matrix.clang-version }} + libstdc++ - C++${{ matrix.cppstd }} - ${{ matrix.build-type }}
+
+    runs-on: ubuntu-22.04
+
+    env:
+      CC: clang-${{ matrix.clang-version }}
+      CXX: clang++-${{ matrix.clang-version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Clang
+        uses: egor-tensin/setup-clang@v2
+        with:
+          version: ${{ matrix.clang-version }}
+          cc: 0
+
+      - name: Check Clang Version
+        shell: bash
+        run: |
+          "$CC" --version
+          compiler_major="$("$CC" -dM -E -x c /dev/null | awk '$2 == "__clang_major__" {print $3}')"
+          [[ "$compiler_major" == "${{ matrix.clang-version }}" ]]
+
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Setup Conan
+        run: |
+          conan --version
+          conan profile detect --force
+          conan profile show -pr default --format=json |
+            jq -e --arg version "${{ matrix.clang-version }}" '
+              .host.settings.compiler == "clang"
+              and .host.settings["compiler.version"] == $version
+              and .host.settings["compiler.libcxx"] == "libstdc++11"
+            '
 
       - name: Install CMake
         uses: lukka/get-cmake@latest
