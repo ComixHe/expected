@@ -598,7 +598,9 @@ struct storage_base<T, E, false>
     {
     }
 
-    ZEUS_EXPECTED_CONSTEXPR_DTOR ~storage_base() noexcept
+    // Keep the exception specification implicit; an explicit noexcept trips
+    // Clang's LLVM-59854 during constexpr destruction.
+    ZEUS_EXPECTED_CONSTEXPR_DTOR ~storage_base()
     {
         if (m_has_val)
         {
@@ -738,7 +740,9 @@ struct storage_base<void, E, false>
     {
     }
 
-    ZEUS_EXPECTED_CONSTEXPR_DTOR ~storage_base() noexcept
+    // Keep the exception specification implicit; an explicit noexcept trips
+    // Clang's LLVM-59854 during constexpr destruction.
+    ZEUS_EXPECTED_CONSTEXPR_DTOR ~storage_base()
     {
         if (!m_has_val)
         {
