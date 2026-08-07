@@ -401,7 +401,14 @@ constexpr decltype(auto) expected_source_value(Rhs &&rhs) noexcept
     }
     else
     {
-        return (std::forward<Rhs>(rhs).m_val);
+        if constexpr (std::is_lvalue_reference_v<Rhs>)
+        {
+            return (rhs.m_val);
+        }
+        else
+        {
+            return std::move(rhs.m_val);
+        }
     }
 }
 
@@ -414,7 +421,14 @@ constexpr decltype(auto) expected_source_error(Rhs &&rhs) noexcept
     }
     else
     {
-        return (std::forward<Rhs>(rhs).m_unexpect);
+        if constexpr (std::is_lvalue_reference_v<Rhs>)
+        {
+            return (rhs.m_unexpect);
+        }
+        else
+        {
+            return std::move(rhs.m_unexpect);
+        }
     }
 }
 
