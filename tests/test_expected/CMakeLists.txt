@@ -33,6 +33,7 @@ function(add_test_expected CPP_STANDARD)
     target_sources(${TARGET_NAME} PRIVATE ${SOURCES})
 
     catch_discover_tests(${TARGET_NAME})
+    zeus_expected_configure_catch_test_sanitizers(${TARGET_NAME})
 endfunction()
 
 add_test_expected(17)

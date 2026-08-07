@@ -14,3 +14,4 @@ target_sources(${PROJECT_NAME}
 )
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+zeus_expected_configure_test_sanitizers(${PROJECT_NAME})
