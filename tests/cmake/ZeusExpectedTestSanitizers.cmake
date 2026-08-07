@@ -229,6 +229,16 @@ function(zeus_expected_configure_catch_test_sanitizers TARGET_NAME)
         return()
     endif ()
 
+    if (MSVC AND _ZEUS_EXPECTED_TEST_ASAN_SUPPORTED)
+        # Conan may provide Catch2 as a static library built without ASan.
+        # Match its MSVC STL annotation mode while keeping the test target
+        # itself instrumented with /fsanitize=address.
+        target_compile_definitions("${TARGET_NAME}" PRIVATE
+            _DISABLE_STRING_ANNOTATION
+            _DISABLE_VECTOR_ANNOTATION
+        )
+    endif ()
+
     # Catch2 exposes the discovered test list only while CTest processes
     # TEST_INCLUDE_FILES. Set the environment there so its semicolon-separated
     # entries are not flattened as Catch2 property arguments.
