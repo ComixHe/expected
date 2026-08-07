@@ -554,10 +554,10 @@ namespace test_expected {
             assert(move_constructed_value.value() == 42);
             static_assert(noexcept(Expected{Input{}}) == should_be_noexcept || is_permissive);
 
-            const Expected brace_constructed_value{{}};
+            const Expected brace_constructed_value{{payload_constructors{}}};
             assert(brace_constructed_value);
             assert(brace_constructed_value.value() == 0);
-            static_assert(noexcept(Expected{{}}));
+            static_assert(noexcept(Expected{{payload_constructors{}}}));
         }
 
         { // converting from different expected
