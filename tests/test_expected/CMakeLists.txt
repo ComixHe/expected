@@ -1,6 +1,7 @@
 project(test_expected LANGUAGES CXX)
 
 set(SOURCES
+    assignment_exception_tests.cpp
     base_tests.cpp
     converting_constructor_tests.cpp
     constructor_exception_tests.cpp
