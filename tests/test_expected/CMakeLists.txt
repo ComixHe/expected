@@ -1,9 +1,13 @@
 project(test_expected LANGUAGES CXX)
 
 set(SOURCES
+    assignment_exception_tests.cpp
     base_tests.cpp
+    converting_constructor_tests.cpp
+    constructor_exception_tests.cpp
     monadic_tests.cpp
     noexcept_tests.cpp
+    swap_exception_tests.cpp
     equality_tests.cpp
     equality_noexcept_tests.cpp
     p3379_tests.cpp
@@ -33,6 +37,7 @@ function(add_test_expected CPP_STANDARD)
     target_sources(${TARGET_NAME} PRIVATE ${SOURCES})
 
     catch_discover_tests(${TARGET_NAME})
+    zeus_expected_configure_catch_test_sanitizers(${TARGET_NAME})
 endfunction()
 
 add_test_expected(17)

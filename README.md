@@ -4,7 +4,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/zeus-cpp/expected?color=green)](https://github.com/zeus-cpp/expected/releases)
 [![Conan Center](https://img.shields.io/conan/v/zeus_expected)](https://conan.io/center/recipes/zeus_expected)
 
-Backporting `std::expected` to C++17.
+A C++17 backport of `std::expected`, designed for API compatibility with the standard library.
 
 ## Features
 
@@ -32,18 +32,17 @@ Enhancements:
 
 + Enhanced noexcept (covered by tests from MSVC's STL)
 
-## Compiler supports
+## Compiler support
 
-Any compiler that supports C++17 should work.
+A conforming C++17 implementation is required. Higher language standards are also supported and can provide benefits such as enhanced constexpr capabilities.
 
-Higher language standards are also supported, which can provide benefits such as enhanced constexpr capabilities.
+| Compiler | Supported versions |
+| --- | --- |
+| MSVC | v142 and later |
+| GCC | 8 and later |
+| Clang | 11 and later |
 
-List of known compiler supported:
-
-+ MSVC v142 and later
-+ GCC 8 and later
-
-Feedbacks are welcome.
+See the [CI workflow](.github/workflows/tests.yml) for the compiler and language standard combinations that are continuously tested. Other conforming compilers may also work. Feedback is welcome.
 
 ## Building and testing
 

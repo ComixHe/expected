@@ -3,6 +3,7 @@
 
 #pragma once
 
+#ifdef _MSC_VER
 #include <yvals_core.h>
 
 namespace detail {
@@ -29,3 +30,6 @@ template <class T>
 constexpr bool is_permissive_v = detail::PermissiveTest<T>::test();
 
 _INLINE_VAR constexpr bool is_permissive = is_permissive_v<int>;
+#else
+inline constexpr bool is_permissive = false;
+#endif

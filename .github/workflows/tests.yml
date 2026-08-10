@@ -37,7 +37,7 @@ jobs:
     runs-on: windows-2022
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Conan
         uses: turtlebrowser/get-conan@main
@@ -62,7 +62,7 @@ jobs:
       - name: CMake Configure
         run: |
           cmake --list-presets
-          cmake --preset conan-default
+          cmake --preset conan-default -DZEUS_EXPECTED_TEST_ASAN_AUTO=OFF -DZEUS_EXPECTED_TEST_UBSAN_AUTO=OFF
 
       - name: Build
         run: |
@@ -99,7 +99,7 @@ jobs:
     runs-on: ${{ matrix.gcc.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup GCC
         if: matrix.gcc.version == 15
@@ -134,7 +134,7 @@ jobs:
       - name: CMake Configure
         run: |
           cmake --list-presets
-          cmake --preset ${{ matrix.cmake-preset }}
+          cmake --preset ${{ matrix.cmake-preset }} -DZEUS_EXPECTED_TEST_ASAN_AUTO=OFF -DZEUS_EXPECTED_TEST_UBSAN_AUTO=OFF
 
       - name: Build
         run: |
@@ -185,7 +185,7 @@ jobs:
             python3-pip \
             unzip
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check GCC Version
         run: |
@@ -214,7 +214,7 @@ jobs:
       - name: CMake Configure
         run: |
           cmake --list-presets
-          cmake --preset ${{ matrix.cmake-preset }}
+          cmake --preset ${{ matrix.cmake-preset }} -DZEUS_EXPECTED_TEST_ASAN_AUTO=OFF -DZEUS_EXPECTED_TEST_UBSAN_AUTO=OFF
 
       - name: Build
         run: |
@@ -252,7 +252,7 @@ jobs:
       CXX: clang++-${{ matrix.clang-version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Clang
         uses: egor-tensin/setup-clang@v2
@@ -294,7 +294,7 @@ jobs:
       - name: CMake Configure
         run: |
           cmake --list-presets
-          cmake --preset ${{ matrix.cmake-preset }}
+          cmake --preset ${{ matrix.cmake-preset }} -DZEUS_EXPECTED_TEST_ASAN_AUTO=OFF -DZEUS_EXPECTED_TEST_UBSAN_AUTO=OFF
 
       - name: Build
         run: |
@@ -326,7 +326,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup GCC
         uses: egor-tensin/setup-gcc@v1
@@ -360,7 +360,7 @@ jobs:
       - name: CMake Configure
         run: |
           cmake --list-presets
-          cmake --preset ${{ matrix.cmake-preset }}
+          cmake --preset ${{ matrix.cmake-preset }} -DZEUS_EXPECTED_TEST_ASAN_AUTO=OFF -DZEUS_EXPECTED_TEST_UBSAN_AUTO=OFF
 
       - name: Build
         run: |

@@ -1,0 +1,146 @@
+name: Sanitizers
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - ci/**
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test-on-msvc:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        build-type: [Debug, Release]
+        include:
+          - build-type: Debug
+            cmake-preset: conan-debug
+          - build-type: Release
+            cmake-preset: conan-release
+
+    name: MSVC v143 - ASan - ${{ matrix.build-type }}
+
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup MSVC developer environment
+        uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Setup Conan
+        run: |
+          conan --version
+          conan profile detect
+
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install dependencies
+        run: >
+          conan install .
+          -c tools.microsoft.msbuild:vs_version=17
+          -s compiler.version=194
+          -s compiler.cppstd=23
+          -s build_type=${{ matrix.build-type }}
+          -b missing
+
+      - name: CMake Configure
+        run: >
+          cmake --preset conan-default
+          -DZEUS_EXPECTED_TEST_ASAN_REQUIRED=ON
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.cmake-preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.cmake-preset }} --output-on-failure
+
+  test-on-linux:
+    strategy:
+      fail-fast: false
+
+      matrix:
+        compiler:
+          - name: GCC 15
+            id: gcc
+            version: 15
+            cc: gcc-15
+            cxx: g++-15
+          - name: Clang 22
+            id: clang
+            version: 22
+            cc: clang-22
+            cxx: clang++-22
+        build-type: [Debug, Release]
+        include:
+          - build-type: Debug
+            cmake-preset: conan-debug
+          - build-type: Release
+            cmake-preset: conan-release
+
+    name: ${{ matrix.compiler.name }} - ASan + UBSan - ${{ matrix.build-type }}
+
+    runs-on: ubuntu-24.04
+
+    env:
+      CC: ${{ matrix.compiler.cc }}
+      CXX: ${{ matrix.compiler.cxx }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup GCC
+        if: matrix.compiler.id == 'gcc'
+        uses: egor-tensin/setup-gcc@v2
+        with:
+          version: ${{ matrix.compiler.version }}
+
+      - name: Setup Clang
+        if: matrix.compiler.id == 'clang'
+        uses: egor-tensin/setup-clang@v2
+        with:
+          version: ${{ matrix.compiler.version }}
+
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Setup Conan
+        run: |
+          conan --version
+          conan profile detect --force
+
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install dependencies
+        run: >
+          conan install .
+          -s compiler.cppstd=23
+          -s build_type=${{ matrix.build-type }}
+          -b missing
+
+      - name: CMake Configure
+        run: >
+          cmake --preset ${{ matrix.cmake-preset }}
+          -DZEUS_EXPECTED_TEST_ASAN_REQUIRED=ON
+          -DZEUS_EXPECTED_TEST_UBSAN_REQUIRED=ON
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.cmake-preset }}
+
+      - name: Test
+        run: ctest --preset ${{ matrix.cmake-preset }} --output-on-failure

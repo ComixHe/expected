@@ -103,21 +103,21 @@ namespace test_unexpected {
         constexpr bool compare_is_noexcept           = IsYes(nothrowComparable);
 
         struct test_error {
-            constexpr test_error(const int& val) noexcept(copy_construction_is_noexcept) : _val(val) {}
-            constexpr test_error(int&& val) noexcept(move_construction_is_noexcept) : _val(val) {}
+            constexpr test_error(const int& val) noexcept(IsYes(nothrowCopyConstructible)) : _val(val) {}
+            constexpr test_error(int&& val) noexcept(IsYes(nothrowMoveConstructible)) : _val(val) {}
 
-            constexpr test_error(initializer_list<int>, const int& val) noexcept(copy_construction_is_noexcept)
+            constexpr test_error(initializer_list<int>, const int& val) noexcept(IsYes(nothrowCopyConstructible))
                 : _val(val) {}
-            constexpr test_error(initializer_list<int>, int&& val) noexcept(move_construction_is_noexcept)
+            constexpr test_error(initializer_list<int>, int&& val) noexcept(IsYes(nothrowMoveConstructible))
                 : _val(val) {}
 
-            constexpr test_error(const convertible& other) noexcept(copy_construction_is_noexcept) : _val(other._val) {}
-            constexpr test_error(convertible&& other) noexcept(move_construction_is_noexcept) : _val(other._val) {}
+            constexpr test_error(const convertible& other) noexcept(IsYes(nothrowCopyConstructible)) : _val(other._val) {}
+            constexpr test_error(convertible&& other) noexcept(IsYes(nothrowMoveConstructible)) : _val(other._val) {}
 
-            [[nodiscard]] constexpr bool operator==(const test_error& right) const noexcept(compare_is_noexcept) {
+            [[nodiscard]] constexpr bool operator==(const test_error& right) const noexcept(IsYes(nothrowComparable)) {
                 return _val == right._val;
             }
-            [[nodiscard]] constexpr bool operator==(const convertible& right) const noexcept(compare_is_noexcept) {
+            [[nodiscard]] constexpr bool operator==(const convertible& right) const noexcept(IsYes(nothrowComparable)) {
                 return _val == right._val;
             }
 
@@ -286,8 +286,8 @@ namespace test_expected {
         struct payload_copy_constructor {
             payload_copy_constructor()                                           = default;
             payload_copy_constructor& operator=(const payload_copy_constructor&) = delete;
-            constexpr payload_copy_constructor(const payload_copy_constructor&) noexcept(should_be_noexcept)
-                requires (!should_be_trivial)
+            constexpr payload_copy_constructor(const payload_copy_constructor&) noexcept(IsYes(triviallyCopyConstructible) || IsYes(nothrowCopyConstructible))
+                requires (!IsYes(triviallyCopyConstructible))
                 : _val(42) {}
             constexpr payload_copy_constructor(const payload_copy_constructor&) = default;
 
@@ -374,8 +374,8 @@ namespace test_expected {
             payload_move_constructor()                                      = default;
             payload_move_constructor(const payload_move_constructor&)       = default;
             payload_move_constructor& operator=(payload_move_constructor&&) = delete;
-            constexpr payload_move_constructor(payload_move_constructor&&) noexcept(should_be_noexcept)
-                requires (!should_be_trivial)
+            constexpr payload_move_constructor(payload_move_constructor&&) noexcept(IsYes(triviallyMoveConstructible) || IsYes(nothrowMoveConstructible))
+                requires (!IsYes(triviallyMoveConstructible))
                 : _val(42) {}
             constexpr payload_move_constructor(payload_move_constructor&&) = default;
 
@@ -521,13 +521,13 @@ namespace test_expected {
             payload_constructors() = default;
             // Note clang does not accept local variables in explicit
             constexpr explicit(IsYes(explicitConstructible)) payload_constructors(const convertible&)
-                noexcept(should_be_noexcept)
+                noexcept(IsYes(nothrowConstructible))
                 : _val(3) {}
             constexpr explicit(IsYes(explicitConstructible)) payload_constructors(convertible&&)
-                noexcept(should_be_noexcept)
+                noexcept(IsYes(nothrowConstructible))
                 : _val(42) {}
             constexpr explicit(IsYes(explicitConstructible)) payload_constructors(initializer_list<int>&, convertible)
-                noexcept(should_be_noexcept)
+                noexcept(IsYes(nothrowConstructible))
                 : _val(1337) {}
 
             [[nodiscard]] constexpr bool operator==(const int val) const noexcept {
@@ -554,10 +554,10 @@ namespace test_expected {
             assert(move_constructed_value.value() == 42);
             static_assert(noexcept(Expected{Input{}}) == should_be_noexcept || is_permissive);
 
-            const Expected brace_constructed_value{{}};
+            const Expected brace_constructed_value{{payload_constructors{}}};
             assert(brace_constructed_value);
             assert(brace_constructed_value.value() == 0);
-            static_assert(noexcept(Expected{{}}));
+            static_assert(noexcept(Expected{{payload_constructors{}}}));
         }
 
         { // converting from different expected
@@ -739,26 +739,26 @@ namespace test_expected {
         struct payload_assign {
             payload_assign() = default;
             constexpr payload_assign(const int val) noexcept : _val(val) {}
-            constexpr payload_assign(const payload_assign& other) noexcept(nothrow_copy_constructible)
+            constexpr payload_assign(const payload_assign& other) noexcept(IsYes(nothrowCopyConstructible))
                 : _val(other._val) {}
-            constexpr payload_assign(payload_assign&& other) noexcept(nothrow_move_constructible) : _val(other._val) {}
-            constexpr payload_assign& operator=(const payload_assign& other) noexcept(nothrow_copy_assignable) {
+            constexpr payload_assign(payload_assign&& other) noexcept(IsYes(nothrowMoveConstructible)) : _val(other._val) {}
+            constexpr payload_assign& operator=(const payload_assign& other) noexcept(IsYes(nothrowCopyAssignable)) {
                 _val = other._val;
                 return *this;
             }
-            constexpr payload_assign& operator=(payload_assign&& other) noexcept(nothrow_move_assignable) {
+            constexpr payload_assign& operator=(payload_assign&& other) noexcept(IsYes(nothrowMoveAssignable)) {
                 _val = other._val;
                 return *this;
             }
 
-            constexpr payload_assign(const convertible& other) noexcept(nothrow_copy_constructible)
+            constexpr payload_assign(const convertible& other) noexcept(IsYes(nothrowCopyConstructible))
                 : _val(other._val) {}
-            constexpr payload_assign(convertible&& other) noexcept(nothrow_move_constructible) : _val(other._val) {}
-            constexpr payload_assign& operator=(const convertible& other) noexcept(nothrow_copy_assignable) {
+            constexpr payload_assign(convertible&& other) noexcept(IsYes(nothrowMoveConstructible)) : _val(other._val) {}
+            constexpr payload_assign& operator=(const convertible& other) noexcept(IsYes(nothrowCopyAssignable)) {
                 _val = other._val;
                 return *this;
             }
-            constexpr payload_assign& operator=(convertible&& other) noexcept(nothrow_move_assignable) {
+            constexpr payload_assign& operator=(convertible&& other) noexcept(IsYes(nothrowMoveAssignable)) {
                 _val = other._val;
                 return *this;
             }
@@ -2074,7 +2074,7 @@ namespace test_expected {
         struct payload_equality {
             constexpr payload_equality(const int val) noexcept : _val(val) {}
 
-            [[nodiscard]] constexpr bool operator==(const payload_equality& right) const noexcept(should_be_noexcept) {
+            [[nodiscard]] constexpr bool operator==(const payload_equality& right) const noexcept(IsYes(nothrowComparable)) {
                 return _val == right._val;
             }
 
