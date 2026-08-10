@@ -4,7 +4,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/zeus-cpp/expected?color=green)](https://github.com/zeus-cpp/expected/releases)
 [![Conan Center](https://img.shields.io/conan/v/zeus_expected)](https://conan.io/center/recipes/zeus_expected)
 
-Backporting `std::expected` to C++17.
+A C++17 backport of `std::expected`, designed for API compatibility with the standard library.
 
 ## Features
 
