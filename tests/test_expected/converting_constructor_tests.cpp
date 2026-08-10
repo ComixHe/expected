@@ -50,6 +50,21 @@ private:
     ResourceOwningValue value_;
 };
 
+class NonDefaultConstructibleValue
+{
+public:
+    NonDefaultConstructibleValue() = delete;
+    NonDefaultConstructibleValue(int value)
+        : value_(value)
+    {
+    }
+
+    int value() const noexcept { return value_; }
+
+private:
+    int value_;
+};
+
 zeus::expected<ResourceOwningValue, int> make_resource_owning_value()
 {
     zeus::expected<ConvertibleValue, int> source = ConvertibleValue {};
@@ -66,6 +81,32 @@ TEST_CASE("converting expected does not leak value resources", "[expected][conve
     {
         const auto result = make_resource_owning_value();
         REQUIRE(result.has_value());
+    }
+
+    REQUIRE(ResourceOwningValue::active_resources() == initial_active_resources);
+}
+
+TEST_CASE("converting expected does not require a default-constructible value", "[expected][converting-constructor]")
+{
+    const zeus::expected<int, int> source = 42;
+
+    const zeus::expected<NonDefaultConstructibleValue, long> result = source;
+
+    REQUIRE(result.has_value());
+    REQUIRE(result->value() == 42);
+}
+
+TEST_CASE("converting an error does not construct the value alternative", "[expected][converting-constructor][lifetime]")
+{
+    const int initial_active_resources = ResourceOwningValue::active_resources();
+
+    {
+        zeus::expected<ConvertibleValue, int>           source(zeus::unexpect, 42);
+        const zeus::expected<ResourceOwningValue, long> result(std::move(source));
+
+        REQUIRE_FALSE(result.has_value());
+        REQUIRE(result.error() == 42);
+        REQUIRE(ResourceOwningValue::active_resources() == initial_active_resources);
     }
 
     REQUIRE(ResourceOwningValue::active_resources() == initial_active_resources);
