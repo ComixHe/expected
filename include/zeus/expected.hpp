@@ -865,27 +865,6 @@ struct operations_base : storage_base<T, E>
 {
     using storage_base<T, E>::storage_base;
 
-    template<class... Args>
-    constexpr void construct(Args &&...args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
-    {
-        expected_detail::construct_at(&this->m_val, std::forward<Args>(args)...);
-        this->m_has_val = true;
-    }
-
-    template<class Rhs>
-    constexpr void construct_with(Rhs &&rhs) noexcept(std::is_nothrow_constructible_v<T, Rhs>)
-    {
-        expected_detail::construct_at(&this->m_val, std::forward<Rhs>(rhs).get());
-        this->m_has_val = true;
-    }
-
-    template<class... Args>
-    constexpr void construct_error(Args &&...args) noexcept(std::is_nothrow_constructible_v<E, Args...>)
-    {
-        expected_detail::construct_at(&this->m_unexpect, std::forward<Args>(args)...);
-        this->m_has_val = false;
-    }
-
     constexpr T        &get()        &noexcept { return this->m_val; }
     constexpr const T  &get() const  &noexcept { return this->m_val; }
     constexpr T       &&get()       &&noexcept(std::is_nothrow_move_constructible_v<T>) { return std::move(this->m_val); }
@@ -903,23 +882,6 @@ template<class E>
 struct operations_base<void, E> : storage_base<void, E>
 {
     using storage_base<void, E>::storage_base;
-
-    constexpr void construct() noexcept { this->m_has_val = true; }
-
-    // This function doesn't use its argument, but needs it so that code in
-    // levels above this can work independently of whether T is void
-    template<class Rhs>
-    constexpr void construct_with(Rhs &&) noexcept
-    {
-        this->m_has_val = true;
-    }
-
-    template<class... Args>
-    constexpr void construct_error(Args &&...args) noexcept(std::is_nothrow_constructible_v<E, Args...>)
-    {
-        expected_detail::construct_at(&this->m_unexpect, std::forward<Args>(args)...);
-        this->m_has_val = false;
-    }
 
     constexpr E        &geterr()        &noexcept { return this->m_unexpect; }
     constexpr const E  &geterr() const  &noexcept { return this->m_unexpect; }
