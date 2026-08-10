@@ -7,6 +7,7 @@ set(SOURCES
     constructor_exception_tests.cpp
     monadic_tests.cpp
     noexcept_tests.cpp
+    swap_exception_tests.cpp
     equality_tests.cpp
     equality_noexcept_tests.cpp
     p3379_tests.cpp
