@@ -70,6 +70,22 @@ public:
 };
 
 template<int Id>
+class ImplicitThrowFromSourceError
+{
+public:
+    ImplicitThrowFromSourceError(const SourceError &) { throw ConstructorException {}; }
+    ImplicitThrowFromSourceError(SourceError &&) { throw ConstructorException {}; }
+
+    ~ImplicitThrowFromSourceError() { ++destructor_calls_; }
+
+    static int  destructor_calls() noexcept { return destructor_calls_; }
+    static void reset() noexcept { destructor_calls_ = 0; }
+
+private:
+    inline static int destructor_calls_ = 0;
+};
+
+template<int Id>
 class ExplicitThrowFromSourceError
 {
 public:
@@ -326,6 +342,82 @@ TEST_CASE("moving a void expected does not destroy an unconstructed error", "[ex
         [&]
         {
             Expected target(std::move(source));
+            (void) target;
+        }
+    );
+}
+
+TEST_CASE(
+    "implicit lvalue converting void expected does not destroy an unconstructed error",
+    "[expected][constructor][exception-safety][lifetime]"
+)
+{
+    using Source = zeus::expected<void, SourceError>;
+    using Probe  = ImplicitThrowFromSourceError<11>;
+    using Target = zeus::expected<void, Probe>;
+
+    const Source source(zeus::unexpect);
+    require_no_destructor_for_unconstructed_error<Probe>(
+        [&]
+        {
+            Target target = source;
+            (void) target;
+        }
+    );
+}
+
+TEST_CASE(
+    "explicit lvalue converting void expected does not destroy an unconstructed error",
+    "[expected][constructor][exception-safety][lifetime]"
+)
+{
+    using Source = zeus::expected<void, SourceError>;
+    using Probe  = ExplicitThrowFromSourceError<12>;
+    using Target = zeus::expected<void, Probe>;
+
+    const Source source(zeus::unexpect);
+    require_no_destructor_for_unconstructed_error<Probe>(
+        [&]
+        {
+            Target target(source);
+            (void) target;
+        }
+    );
+}
+
+TEST_CASE(
+    "implicit rvalue converting void expected does not destroy an unconstructed error",
+    "[expected][constructor][exception-safety][lifetime]"
+)
+{
+    using Source = zeus::expected<void, SourceError>;
+    using Probe  = ImplicitThrowFromSourceError<13>;
+    using Target = zeus::expected<void, Probe>;
+
+    Source source(zeus::unexpect);
+    require_no_destructor_for_unconstructed_error<Probe>(
+        [&]
+        {
+            Target target = std::move(source);
+            (void) target;
+        }
+    );
+}
+
+TEST_CASE(
+    "explicit rvalue converting void expected does not destroy an unconstructed error",
+    "[expected][constructor][exception-safety][lifetime]"
+)
+{
+    using Source = zeus::expected<void, SourceError>;
+    using Probe  = ExplicitThrowFromSourceError<14>;
+    using Target = zeus::expected<void, Probe>;
+
+    Source source(zeus::unexpect);
+    require_no_destructor_for_unconstructed_error<Probe>(
+        [&]
+        {
+            Target target(std::move(source));
             (void) target;
         }
     );
